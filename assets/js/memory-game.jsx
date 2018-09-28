@@ -201,14 +201,14 @@ function MenuScreen(params) {
     params.root.resetBoard(true);
     params.root.goToPlayScreen();
   }
-  return <span>
+  return <div>
     <div className="row"><div className="column"><h1>Memory Game</h1></div></div>
     <div className="row">
       <div className="column">
         <button onClick={onStartButtonPressed}>Start</button>
       </div>
     </div>
-  </span>;
+  </div>;
 }
 
 // root - MemoryGame - the root object
@@ -222,7 +222,7 @@ function PlayScreen(params) {
   let onCardClicked = (pos) => {
     params.root.guess(pos);
   }
-  return <span>
+  return <div>
            <div className="row">
              <div className="column"><h1>Memory Game</h1></div>
            </div>
@@ -234,7 +234,7 @@ function PlayScreen(params) {
            <Board cells={params.root.state.cells}
                   shownPositions={params.root.state.correctGuesses.concat([params.root.state.firstGuess, params.root.state.secondGuess])}
                   onGuess={onCardClicked} />
-         </span>;
+         </div>;
 }
 
 // root - MemoryGame - the root object
@@ -246,7 +246,7 @@ function RetryScreen(params) {
   let onMenuButtonPressed = () => {
     params.root.goToMenuScreen();
   }
-  return <span>
+  return <div>
     <div className="row">
       <div className="column"><h3>A winner is you.</h3></div>
     </div>
@@ -259,7 +259,7 @@ function RetryScreen(params) {
     <div className="row">
       <div className="column"><button onClick={onMenuButtonPressed}>Menu</button></div>
     </div>
-  </span>;
+  </div>;
 }
 
 // cells - the board
