@@ -2,8 +2,37 @@
 
 @import "~milligram/dist/milligram";
 
-.column > p {
-    padding-top: 10ex;
-    text-align: center;
+/*.column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}*/
+
+.row .column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+.card {
+  border: 2px black solid;
+  border-radius: 5vh;
+  font-size: 5vh;
+  padding: 0;
+  margin: 1vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 20vh;
+  height: 20vh;
+}
+
+.hidden-card {
+  background-color: darkblue;
+  color: white;
+}
+
+.shown-card {
+  background-color: lightgrey;
+  color: black;
+}
