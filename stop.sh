@@ -7,7 +7,3 @@ echo "Stopping old copy of app, if any..."
 
 _build/prod/rel/memory/bin/memory stop || true
 
-echo "Starting app..."
-
-_build/prod/rel/memory/bin/memory start
-
