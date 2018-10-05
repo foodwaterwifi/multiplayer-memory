@@ -17,9 +17,37 @@ import $ from "jquery";
 // Local files can be imported directly using relative paths, for example:
 // import socket from "./socket"
 
+import socket from "./socket";
 import game_init from "./memory-game";
 
-$(() => {
-  let root = $('#root')[0];
-  game_init(root);
-});
+function channel_from_name(name) {
+  return socket.channel("games:" + name, {});
+}
+
+function form_init() {
+  $('#game-button').click(() => {
+    let gameName = $('#game-input').val();
+    console.log("Joining game '" + gameName + "'");
+    window.location.href = "/game/" + gameName;
+    //channel.push("double", { xx: xx }).receive("doubled", msg => {
+    //  console.log("doubled", msg);
+    //  $('#game-output').text(msg.yy);
+    //});
+  });
+}
+
+function start() {
+  let isGame = !!document.getElementById("page:game");
+  if (isGame) {
+    console.log("Game name is '", gameName, "'");
+    game_init(root, channel_from_name(window.gameName));
+  }
+
+  let isIndex = !!document.getElementById("page:index");
+  if (isIndex) {
+    console.log("Index page loaded.")
+    form_init();
+  }
+}
+
+$(start);

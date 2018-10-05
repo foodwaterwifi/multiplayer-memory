@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 
-export default function game_init(root) {
-  ReactDOM.render(<MemoryGame />, root);
+export default function game_init(root, channel) {
+  ReactDOM.render(<MemoryGame channel={channel}/>, root);
 }
 
 // A Position is a {x: integer, y: intereger}
@@ -25,37 +25,48 @@ class MemoryGame extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { cells: [["A", "A", "B", "B"],
-                           ["C", "C", "D", "D"],
-                           ["E", "E", "F", "F"],
-                           ["G", "G", "H", "H"]],
-                   correctGuesses: [],
-                   firstGuess: null,
-                   secondGuess: null,
+    this.channel = props.channel;
+    this.state = { cells: null,
                    clicks: 0,
-                   currentTimeoutId: -1,
-                   gameState: "menu",
-                 };
+                   first_guess: null,
+                   second_guess: null,
+                   current_timeout_id: -1};
 
-    //console.log("Default state: ", this.state);
+    console.log("Attempting to connect to channel.")
+    this.channel.join()
+        .receive("ok", resp => {
+          console.log("Successfully connected.");
+          this.gotView(resp);
+        })
+        .receive("error", resp => { console.log("Unable to join: ", resp) })
   }
 
-  goToMenuScreen() {
-    //console.log("go to menu"),
-    this.clearCurrentTimeout();
-    this.setState(_.assign(this.state, {gameState: "menu"}));
+  gotView(view) {
+    console.log("Received new view.")
+
+    this.setState(_.assign(this.state, view.game));
+
+    this.resetCurrentTimeout()
+
+    if (view.game.first_guess != null && view.game.second_guess != null) {
+      let timeoutId = window.setTimeout(() => {
+        this.setState({ first_guess: null, second_guess: null });
+        this.resetCurrentTimeout();
+      }, 1000);
+      this.setState({ current_timeout_id: timeoutId })
+    }
   }
 
-  goToPlayScreen() {
-    //console.log("go to play"),
-    this.clearCurrentTimeout();
-    this.setState(_.assign(this.state, {gameState: "play"}));
+  hasWon() {
+    // We've one once there are no more ? cards
+    return this.state.cells != null && !_.includes(_.flatten(this.state.cells), "?");
   }
 
-  goToRetryScreen() {
-    //console.log("go to restart"),
-    this.clearCurrentTimeout();
-    this.setState(_.assign(this.state, {gameState: "retry"}));
+  resetCurrentTimeout() {
+    if (this.state.current_timeout_id >= 0) {
+      window.clearTimeout(this.state.current_timeout_id);
+      this.setState({ current_timeout_id: -1 });
+    }
   }
 
   resetBoard(randomizeBoard) {
@@ -70,157 +81,30 @@ class MemoryGame extends React.Component {
       }));
   }
 
-  // Clears the timeout action currently active.
-  clearCurrentTimeout() {
-    //console.log("cleared timeout");
-    if (this.state.currentTimeoutId >= 0) {
-      window.clearTimeout(this.state.currentTimeoutId);
-      this.setState(_.assign(this.state, {currentTimeoutId: -1}));
-    }
-  }
-
-  // width - integer - width of the board
-  // height - integer - height of the board
-  // symbols - [string, ...] - symbols to use as card values
-  generateRandomBoard(width, height, symbols) {
-    // there must be an even number of cells, and the symbols list cannot be empty
-    let numCells = width*height;
-    if (numCells % 2 != 0 || symbols.length == 0) {
-      return [];
-    }
-    // generate a list of random positions
-    let positions = [];
-    for (yy = 0; yy < height; yy++) {
-      for (xx = 0; xx < width; xx++) {
-        positions.push({x: xx, y: yy});
-      }
-    }
-    positions = _.shuffle(positions);
-    // construct the board
-    let board = [];
-    let xx, yy;
-    for (yy = 0; yy < height; yy++) {
-      let row = [];
-      for (xx = 0; xx < width; xx++) {
-        row.push(1); // placeholder
-      }
-      board.push(row);
-    }
-    // use the positions list to assign pairs
-    let lastSymbol = null;
-    let symbolIndex = 0;
-    let i;
-    for (i = 0; i < positions.length; i++) {
-      let pos = positions[i];
-      let symbol;
-      if (lastSymbol) {
-        symbol = lastSymbol;
-        lastSymbol = null;
-        symbolIndex = (symbolIndex + 1)%symbols.length;
-      }
-      else {
-        symbol = symbols[symbolIndex];
-        lastSymbol = symbol;
-      }
-      board[pos['y']][pos['x']] = symbol;
-    }
-    return board;
-  }
-
-  // pos - Position - the position of the card that is our guess
-  // this function comprises the main game logic
-  guess(pos) {
-    //console.log("guessed: ", pos);
-    //console.log("Before guess: ", this.state);
-    // check if we already have this guess, or are delaying
-    if (this.state.currentTimeoutId >= 0 || _.isEqual(this.state.firstGuess, pos) || _.isEqual(this.state.secondGuess, pos) || _.some(this.state.correctGuesses, pos)) {
-      // do nothing
+  render() {
+    console.log("New render: ", this.state);
+    if (this.hasWon()) {
+      return <RetryScreen root={this}/>;
     }
     else {
-      // check if we have a first guess already
-      if (this.state.firstGuess) {
-        // if it's a match
-        if (this.state.cells[pos.y][pos.x] == this.state.cells[this.state.firstGuess.y][this.state.firstGuess.x]) {
-          let newCorrectGuesses = _.concat(this.state.correctGuesses, [this.state.firstGuess, pos]);
-          this.setState(_.assign(this.state, {correctGuesses: newCorrectGuesses, firstGuess: null, clicks: this.state.clicks + 1}));
-        }
-        // if the guess was wrong
-        else {
-          let timeoutId = window.setTimeout(() => {
-            //console.log("flip cards back over"),
-            this.setState(_.assign(this.state, {firstGuess: null, secondGuess: null, currentTimeoutId: -1}));
-          }, 1000);
-          //console.log("flipped cards over: timeout id is ", timeoutId);
-          this.setState(_.assign(this.state, {secondGuess: pos, clicks: this.state.clicks + 1, currentTimeoutId: timeoutId}));
-        }
-      }
-      else {
-        // we don't have a first guess yet; set it.
-        this.setState(_.assign(this.state, {firstGuess: pos, clicks: this.state.clicks + 1}));
-      }
-
-      if (this.hasWon()) {
-        let timeoutId = window.setTimeout(() => {
-          //console.log("after waiting, go to retry screen"),
-          this.setState(_.assign(this.state, {currentTimeoutId: -1}));
-          this.goToRetryScreen();
-        }, 1000)
-        this.setState(_.assign(this.state, {currentTimeoutId: timeoutId}));
-      }
-    }
-
-    //console.log("After guess: ", this.state);
-  }
-
-  // returns true if the board is in a winning state
-  hasWon() {
-    return (this.state.correctGuesses.length == _.flatten(this.state.cells).length);
-  }
-
-  render() {
-    //console.log("New render: ", this.state);
-    switch (this.state.gameState) {
-      case "menu":
-        return <MenuScreen root={this}/>;
-        break;
-      case "play":
-        return <PlayScreen root={this}/>;
-        break;
-      case "retry":
-        return <RetryScreen root={this}/>;
-        break;
-      default:
-        throw "Invalid";
+      return <PlayScreen root={this}/>;
     }
   }
-}
-
-// root - MemoryGame - the root object
-function MenuScreen(params) {
-  let onStartButtonPressed = () => {
-    params.root.resetBoard(true);
-    params.root.goToPlayScreen();
-  }
-  return <div>
-    <div className="row"><div className="column"><h1>Memory Game</h1></div></div>
-    <div className="row">
-      <div className="column">
-        <button onClick={onStartButtonPressed}>Start</button>
-      </div>
-    </div>
-  </div>;
 }
 
 // root - MemoryGame - the root object
 function PlayScreen(params) {
   let onRestartButtonPressed = () => {
-    params.root.resetBoard(true);
+    params.root.channel.push("reset", {})
+      .receive("ok", params.root.gotView.bind(params.root));
   }
   let onMenuButtonPressed = () => {
-    params.root.goToMenuScreen();
+    window.location.href = "/";
   }
   let onCardClicked = (pos) => {
-    params.root.guess(pos);
+    if (params.root.state.current_timeout_id >= 0) return; // don't do anything if we're delaying
+    params.root.channel.push("guess", {posx: pos.x, posy: pos.y})
+      .receive("ok", params.root.gotView.bind(params.root));
   }
   return <div>
            <div className="row">
@@ -232,7 +116,8 @@ function PlayScreen(params) {
              <div className="column"><button onClick={onRestartButtonPressed}>Restart</button></div>
            </div>
            <Board cells={params.root.state.cells}
-                  shownPositions={params.root.state.correctGuesses.concat([params.root.state.firstGuess, params.root.state.secondGuess])}
+                  firstGuess={params.root.state.first_guess}
+                  secondGuess={params.root.state.second_guess}
                   onGuess={onCardClicked} />
          </div>;
 }
@@ -240,11 +125,11 @@ function PlayScreen(params) {
 // root - MemoryGame - the root object
 function RetryScreen(params) {
   let onRestartButtonPressed = () => {
-    params.root.resetBoard(true);
-    params.root.goToPlayScreen();
+    params.root.channel.push("reset", {})
+      .receive("ok", params.root.gotView.bind(params.root));
   }
   let onMenuButtonPressed = () => {
-    params.root.goToMenuScreen();
+    window.location.href = "/";
   }
   return <div>
     <div className="row">
@@ -265,15 +150,31 @@ function RetryScreen(params) {
 // cells - the board
 // shownPositions - cards to be shown face-up
 function Board(params) {
+  if (params.cells == null) {
+    return <div className="row">
+             <div className="column">
+                <h4>Loading...</h4>
+             </div>
+           </div>
+  }
   //console.log("Cells: ", params.cells);
   let board = [];
   let xx, yy;
   for (yy = 0; yy < params.cells.length; yy++) {
     let columns = [];
     for (xx = 0; xx < params.cells.length; xx++) {
+      let cardText = params.cells[yy][xx];
+      if (cardText == "?") {
+        if (params.firstGuess != null && _.isEqual(params.firstGuess.pos, {x: xx, y: yy})) {
+          cardText = params.firstGuess.letter;
+        }
+        else if (params.secondGuess != null && _.isEqual(params.secondGuess.pos, {x: xx, y: yy})) {
+          cardText = params.secondGuess.letter;
+        }
+      }
       let card = <div key = {xx.toString()} className="column">
-                   <Card text = {params.cells[yy][xx]}
-                         hidden = {!_.some(params.shownPositions, {x: xx, y: yy})}
+                   <Card text = {cardText}
+                         hidden = {cardText == "?"}
                          onGuess = {params.onGuess}
                          pos = {{x: xx, y: yy}} />
                  </div>;

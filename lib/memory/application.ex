@@ -10,8 +10,9 @@ defmodule Memory.Application do
     children = [
       # Start the endpoint when the application starts
       MemoryWeb.Endpoint,
-      # Starts a worker by calling: Memory.Worker.start_link(arg)
-      # {Memory.Worker, arg},
+      # Starts a backup agent by calling: Memory.BackupAgent.start_link(arg)
+      # {Memory.BackupAgent, arg},
+      Memory.BackupAgent,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

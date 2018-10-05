@@ -1,0 +1,8 @@
+<span id="page:game"></span>
+<script>
+  window.gameName = "<%= @game %>";
+</script>
+
+<div id="root">
+  Memory game loading...
+</div>
