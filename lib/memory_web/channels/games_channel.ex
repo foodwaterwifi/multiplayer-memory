@@ -29,7 +29,8 @@ defmodule MemoryWeb.GamesChannel do
     game_to_store = Game.postguess(game_for_client)
     socket = assign(socket, :game, game_to_store)
     BackupAgent.put(name, game_to_store)
-    {:reply, {:ok, %{ "game" => Game.client_view(game_for_client)}}, socket}
+    Memory.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game_for_client))
+    {:noreply, socket}
   end
 
   def handle_in("reset", payload, socket) do
@@ -37,7 +38,8 @@ defmodule MemoryWeb.GamesChannel do
     game = Game.new_state()
     socket = assign(socket, :game, game)
     BackupAgent.put(name, game)
-    {:reply, {:ok, %{ "game" => Game.client_view(game)}}, socket}
+    Memory.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game))
+    {:noreply, socket}
   end
 
   # Add authorization logic here as required.
