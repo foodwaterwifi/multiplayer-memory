@@ -38,7 +38,7 @@ defmodule MemoryWeb.GamesChannel do
     game = Game.new_state()
     socket = assign(socket, :game, game)
     BackupAgent.put(name, game)
-    MemoryWeb.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game))
+    broadcast(socket, "update", %{"game" => Game.client_view(game_for_client)})
     {:noreply, socket}
   end
 
