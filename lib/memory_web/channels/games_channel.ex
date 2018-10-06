@@ -22,7 +22,7 @@ defmodule MemoryWeb.GamesChannel do
     # This version of the game will be sent to the client. It includes their two guesses.
     # The client is responsible for flipping the cards back over. The game could be cheated either way,
     # so this puts less stress on the server.
-    game_for_client = Game.guess(socket.assigns[:game], posx, posy)
+    game_for_client = Game.guess(BackupAgent.get(name), posx, posy)
     # This version of the game will be stored on the server. It does not include the two
     # guesses. This way, if the client reloads the page, they will no longer receive information
     # about the cards they should have flipped over.
