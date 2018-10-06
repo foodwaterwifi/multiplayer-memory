@@ -29,7 +29,7 @@ defmodule MemoryWeb.GamesChannel do
     game_to_store = Game.postguess(game_for_client)
     socket = assign(socket, :game, game_to_store)
     BackupAgent.put(name, game_to_store)
-    Memory.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game_for_client))
+    MemoryWeb.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game_for_client))
     {:noreply, socket}
   end
 
@@ -38,7 +38,7 @@ defmodule MemoryWeb.GamesChannel do
     game = Game.new_state()
     socket = assign(socket, :game, game)
     BackupAgent.put(name, game)
-    Memory.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game))
+    MemoryWeb.Endpoint.broadcast("games:" <> name, "update", Game.client_view(game))
     {:noreply, socket}
   end
 
