@@ -41,7 +41,7 @@ class MemoryGame extends React.Component {
         .receive("error", resp => { console.log("Unable to join: ", resp) })
     this.channel.on("update", payload => {
       this.gotView(payload)
-    }
+    })
   }
 
   gotView(view) {
