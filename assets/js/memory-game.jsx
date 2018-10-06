@@ -98,16 +98,14 @@ class MemoryGame extends React.Component {
 // root - MemoryGame - the root object
 function PlayScreen(params) {
   let onRestartButtonPressed = () => {
-    params.root.channel.push("reset", {})
-      .receive("ok", params.root.gotView.bind(params.root));
+    params.root.channel.push("reset", {});
   }
   let onMenuButtonPressed = () => {
     window.location.href = "/";
   }
   let onCardClicked = (pos) => {
     if (params.root.state.current_timeout_id >= 0) return; // don't do anything if we're delaying
-    params.root.channel.push("guess", {posx: pos.x, posy: pos.y})
-      .receive("ok", params.root.gotView.bind(params.root));
+    params.root.channel.push("guess", {posx: pos.x, posy: pos.y});
   }
   return <div>
            <div className="row">
@@ -128,8 +126,7 @@ function PlayScreen(params) {
 // root - MemoryGame - the root object
 function RetryScreen(params) {
   let onRestartButtonPressed = () => {
-    params.root.channel.push("reset", {})
-      .receive("ok", params.root.gotView.bind(params.root));
+    params.root.channel.push("reset", {});
   }
   let onMenuButtonPressed = () => {
     window.location.href = "/";
