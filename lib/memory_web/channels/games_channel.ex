@@ -29,7 +29,7 @@ defmodule MemoryWeb.GamesChannel do
     game_to_store = Game.postguess(game_for_client)
     socket = assign(socket, :game, game_to_store)
     BackupAgent.put(name, game_to_store)
-    broadcast(socket, "update", %{"game" => Game.client_view(game_for_client)})
+    broadcast(socket, "update", %{"game" => Game.client_view(game)})
     {:noreply, socket}
   end
 
