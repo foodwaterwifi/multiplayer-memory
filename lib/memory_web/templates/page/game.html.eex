@@ -1,6 +1,7 @@
 <span id="page:game"></span>
 <script>
   window.gameName = "<%= @game %>";
+  window.userName = "<%= @user %>";
 </script>
 
 <div id="root">

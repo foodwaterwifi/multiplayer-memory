@@ -27,12 +27,9 @@ function channel_from_name(name) {
 function form_init() {
   $('#game-button').click(() => {
     let gameName = $('#game-input').val();
-    console.log("Joining game '" + gameName + "'");
-    window.location.href = "/game/" + gameName;
-    //channel.push("double", { xx: xx }).receive("doubled", msg => {
-    //  console.log("doubled", msg);
-    //  $('#game-output').text(msg.yy);
-    //});
+    let playerName = $('#player-name').val();
+    console.log("Joining game '" + gameName + "' as '" + playerName + "'.");
+    window.location.href = "/game/" + gameName + "/" + playerName;
   });
 }
 

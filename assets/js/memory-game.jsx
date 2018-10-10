@@ -85,7 +85,7 @@ class MemoryGame extends React.Component {
        clicks: 0,
       }));
   }
-  
+
   render() {
     console.log("New render: ", this.state);
     if (this.state.player1 == null || this.state.player2 == null) {
@@ -146,10 +146,10 @@ function LobbyScreen(params) {
       <div className="column"><h3>Lobby</h3></div>
     </div>
     <div className="row">
-      <div className="column"><button onClick={onJoinButtonPressed}>Join</button></div
+      <div className="column"><button onClick={onJoinButtonPressed}>Join</button></div>
       <div className="column"><p>{playerCount(params.root.state.player1)} / 2</p></div>
     </div>
-  </div>;  
+  </div>;
 }
 
 // root - MemoryGame - the root object

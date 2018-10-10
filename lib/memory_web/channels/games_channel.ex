@@ -33,6 +33,10 @@ defmodule MemoryWeb.GamesChannel do
     {:noreply, socket}
   end
 
+  def handle_in("joinlobby", %{"name" => user}, socket) do
+
+  end
+
   def handle_in("reset", payload, socket) do
     name = socket.assigns[:name]
     game = Game.new_state()

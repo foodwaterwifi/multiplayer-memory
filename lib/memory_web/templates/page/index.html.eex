@@ -3,11 +3,23 @@
     <div class="column"><h1>Memory Game</h1></div>
 </div>
 <div class="row">
-    <div style="justify-content: right" class="column"><h3>Join a game: </h3></div>
-    <div class="column"><input style="float: right" type="text" id="game-input"></div>
-    <div style="justify-content: left" class="column"><button id="game-button">Join</button></div>
+    <div class="column">
+        <h3 style="white-space: nowrap; padding-right: 5px;">Game Name:</h3>
+        <input style="float: right" type="text" id="game-input">
+    </div>
 </div>
 <div class="row">
-  <div class="column"><a href="/game/demo">Join "demo"</a></div>
+    <div class="column">
+        <h3 style="white-space: nowrap; padding-right: 5px;">Player Name:</h3>
+        <input style="float: right" type="text" id="user-input">
+    </div>
+</div>
+<div class="row">
+    <div class="column"><button id="game-button">Join</button></div>
+</div>
+<div class="row">
+  <div class="column"><a href="/game/demo/player1">Join "demo" as "player1"</a></div>
+  <div class="column"><a href="/game/demo/player2">Join "demo" as "player2"</a></div>
+  <div class="column"><a href="/game/demo/observer">Join "demo" as "observer"</a></div>
   <p id="game-output"></p>
 </div>
