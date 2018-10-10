@@ -5,7 +5,9 @@ defmodule Memory.Game do
        correct_guesses: [],
        first_guess: nil,
        second_guess: nil,
-       clicks: 0,
+       player1: nil,
+       player2: nil,
+       turn: :player1,
      }
   end
 
@@ -33,7 +35,7 @@ defmodule Memory.Game do
       %{pos: Map.new(state.second_guess), letter: get_symbol_at_pos(board, state.second_guess)}
     else nil end
     # Final view
-    %{cells: cells, clicks: state.clicks, first_guess: first_guess, second_guess: second_guess}
+    %{cells: cells, first_guess: first_guess, second_guess: second_guess, player1: player1, player2: player2}
   end
 
   # Assigns random symbols to a board using a list of positions to assign the symbols
@@ -84,16 +86,42 @@ defmodule Memory.Game do
     get_in(board, [pos[:y], pos[:x]])
   end
 
+  # Defines the behavior for when a player joins the lobby
+  def joinlobby(state, name) do
+    cond do
+      state.player1 == nil ->
+        state
+        |> Map.put(:player1, %{"name" => name, "score" => score})
+      state.player2 == nil ->
+        state
+        |> Map.put(:player2, %{"name" => name, "score" => score})
+      true -> state
+    end
+  end
+
+  # Flip turn
+  def flipturn(state) do
+    if (state.turn == :player1) do
+      state
+      |> Map.put(:turn, :player2)
+    else
+      state
+      |> Map.put(:turn, :player1)
+    end
+  end
+
   # Defines the behavior for when the player makes a guess
-  def guess(state, posx, posy) do
+  def guess(state, posx, posy, name) do
     pos = [x: posx, y: posy]
     cond do
+      # It isn't the player's turn
+      (turn == :player1 and state.player1.name != name or turn == :player2 and state.player2.name != name) ->
+        state
       # This is the first guess
       (state.first_guess == nil or (state.first_guess != nil and state.second_guess != nil)) ->
         state
         |> Map.put(:first_guess, pos)
         |> Map.put(:second_guess, nil)
-        |> Map.put(:clicks, state.clicks + 1)
       # We guessed in the same location, do not count
       (state.first_guess == pos and state.second_guess == nil) -> state
       # This is the second guess and it is correct
@@ -101,12 +129,13 @@ defmodule Memory.Game do
         state
         |> Map.put(:correct_guesses, [ state.first_guess | [pos | state.correct_guesses]])
         |> Map.put(:first_guess, nil)
-        |> Map.put(:clicks, state.clicks + 1)
+        |> update_in([state.turn, score], &(&1 + 1)) 
+        |> flipturn()
       # This is the second guess and it is wrong
       true ->
         state
         |> Map.put(:second_guess, pos)
-        |> Map.put(:clicks, state.clicks + 1)
+        |> flipturn()
     end
   end
 
