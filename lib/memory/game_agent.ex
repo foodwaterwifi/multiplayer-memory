@@ -1,5 +1,5 @@
 # From Nat's Lecture Notes
-defmodule Memory.BackupAgent do
+defmodule Memory.GameAgent do
   use Agent
 
   def start_link(_args) do

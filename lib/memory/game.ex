@@ -90,11 +90,9 @@ defmodule Memory.Game do
   def joinlobby(state, name) do
     cond do
       state.player1 == nil ->
-        state
-        |> Map.put(:player1, %{:name => name, :score => 0})
-      state.player2 == nil ->
-        state
-        |> Map.put(:player2, %{:name => name, :score => 0})
+        Map.put(state, :player1, %{:name => name, :score => 0})
+      state.player1.name != name and state.player2 == nil ->
+        Map.put(state, :player2, %{:name => name, :score => 0})
       true -> state
     end
   end
