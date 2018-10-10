@@ -139,7 +139,7 @@ function playerCount(player) {
 
 function LobbyScreen(params) {
   let onJoinButtonPressed = () => {
-    params.root.channel.push("joinlobby", {name : name});
+    params.root.channel.push("joinlobby", {});
   }
   return <div>
     <div className="row">

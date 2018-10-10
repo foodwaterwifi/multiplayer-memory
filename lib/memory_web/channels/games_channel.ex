@@ -6,10 +6,10 @@ defmodule MemoryWeb.GamesChannel do
 
   def join("games:" <> gameName, payload, socket) do
     if authorized?(payload) do
-      gameState = BackupAgent.get(name) || Game.new_state()
+      gameState = BackupAgent.get(gameName) || Game.new_state()
       userName = Map.get(payload, "user")
       socket = socket
-      |> assign(:gameName, name)
+      |> assign(:gameName, gameName)
       |> assign(:userName, userName)
       |> IO.inspect
       BackupAgent.put(gameName, gameState)
@@ -21,10 +21,13 @@ defmodule MemoryWeb.GamesChannel do
 
   def handle_in("guess", %{"posx" => posx, "posy" => posy}, socket) do
     gameName = socket.assigns[:gameName]
+    userName = socket.assigns[:userName]
+
+    IO.puts("User '" <> userName <> "' tried to guess on game '" <> gameName <> "'.")
     # This version of the game will be sent to the client. It includes their two guesses.
     # The client is responsible for flipping the cards back over. The game could be cheated either way,
     # so this puts less stress on the server.
-    game_for_client = Game.guess(BackupAgent.get(gameName), posx, posy)
+    game_for_client = Game.guess(BackupAgent.get(gameName), posx, posy, userName)
     # This version of the game will be stored on the server. It does not include the two
     # guesses. This way, if the client reloads the page, they will no longer receive information
     # about the cards they should have flipped over.
@@ -34,11 +37,16 @@ defmodule MemoryWeb.GamesChannel do
     {:noreply, socket}
   end
 
-  def handle_in("joinlobby", %{"user" => userName}, socket) do
-
+  def handle_in("joinlobby", %{}, socket) do
+    gameName = socket.assigns[:gameName]
+    userName = socket.assigns[:userName]
+    gameState = Game.joinlobby(BackupAgent.get(gameName), userName)
+    BackupAgent.put(gameName, gameState)
+    broadcast(socket, "update", %{"game" => gameState})
+    {:noreply, socket}
   end
 
-  def handle_in("reset", payload, socket) do
+  def handle_in("reset", %{}, socket) do
     gameName = socket.assigns[:gameName]
     gameState = Game.new_state()
     BackupAgent.put(gameName, gameState)

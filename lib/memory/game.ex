@@ -35,7 +35,7 @@ defmodule Memory.Game do
       %{pos: Map.new(state.second_guess), letter: get_symbol_at_pos(board, state.second_guess)}
     else nil end
     # Final view
-    %{cells: cells, first_guess: first_guess, second_guess: second_guess, player1: player1, player2: player2}
+    %{cells: cells, first_guess: first_guess, second_guess: second_guess, player1: state.player1, player2: state.player2}
   end
 
   # Assigns random symbols to a board using a list of positions to assign the symbols
@@ -91,10 +91,10 @@ defmodule Memory.Game do
     cond do
       state.player1 == nil ->
         state
-        |> Map.put(:player1, %{"name" => name, "score" => score})
+        |> Map.put(:player1, %{:name => name, :score => 0})
       state.player2 == nil ->
         state
-        |> Map.put(:player2, %{"name" => name, "score" => score})
+        |> Map.put(:player2, %{:name => name, :score => 0})
       true -> state
     end
   end
@@ -115,7 +115,8 @@ defmodule Memory.Game do
     pos = [x: posx, y: posy]
     cond do
       # It isn't the player's turn
-      (turn == :player1 and state.player1.name != name or turn == :player2 and state.player2.name != name) ->
+      ((state.turn == :player1 and state.player1.name != name) or
+       (state.turn == :player2 and state.player2.name != name)) ->
         state
       # This is the first guess
       (state.first_guess == nil or (state.first_guess != nil and state.second_guess != nil)) ->
@@ -129,7 +130,7 @@ defmodule Memory.Game do
         state
         |> Map.put(:correct_guesses, [ state.first_guess | [pos | state.correct_guesses]])
         |> Map.put(:first_guess, nil)
-        |> update_in([state.turn, score], &(&1 + 1)) 
+        |> update_in([state.turn, :score], &(&1 + 1))
         |> flipturn()
       # This is the second guess and it is wrong
       true ->
