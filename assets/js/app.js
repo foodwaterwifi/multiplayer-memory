@@ -20,8 +20,8 @@ import $ from "jquery";
 import socket from "./socket";
 import game_init from "./memory-game";
 
-function channel_from_name(name) {
-  return socket.channel("games:" + name, {});
+function channel_from_name(gameName, userName) {
+  return socket.channel("games:" + gameName, {user: userName});
 }
 
 function form_init() {
@@ -37,7 +37,7 @@ function start() {
   let isGame = !!document.getElementById("page:game");
   if (isGame) {
     console.log("Game name is '", gameName, "'");
-    game_init(root, channel_from_name(window.gameName));
+    game_init(root, channel_from_name(window.gameName, window.userName));
   }
 
   let isIndex = !!document.getElementById("page:index");
