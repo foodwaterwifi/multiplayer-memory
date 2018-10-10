@@ -30,7 +30,9 @@ class MemoryGame extends React.Component {
                    clicks: 0,
                    first_guess: null,
                    second_guess: null,
-                   current_timeout_id: -1};
+                   current_timeout_id: -1,
+                   player1: null,
+                   player2: null};
 
     console.log("Attempting to connect to channel.")
     this.channel.join()
@@ -83,13 +85,15 @@ class MemoryGame extends React.Component {
        clicks: 0,
       }));
   }
-
+  
   render() {
     console.log("New render: ", this.state);
-    if (this.hasWon()) {
-      return <RetryScreen root={this}/>;
+    if (this.state.player1 == null || this.state.player2 == null) {
+      return <LobbyScreen root={this}/>;
     }
-    else {
+    else if (this.hasWon()) {
+      return <RetryScreen root={this}/>;
+    } else {
       return <PlayScreen root={this}/>;
     }
   }
@@ -114,6 +118,8 @@ function PlayScreen(params) {
            <div className="row">
              <div className="column"><button onClick={onMenuButtonPressed}>Menu</button></div>
              <div className="column"><p>Clicks: {params.root.state.clicks}</p></div>
+             <div className="column"><p>{params.root.state.player1.name}'s Score: {params.root.state.player1.score}</p></div>
+             <div className="column"><p>{params.root.state.player2.name}'s Score: {params.root.state.player2.score}</p></div>
              <div className="column"><button onClick={onRestartButtonPressed}>Restart</button></div>
            </div>
            <Board cells={params.root.state.cells}
@@ -121,6 +127,29 @@ function PlayScreen(params) {
                   secondGuess={params.root.state.second_guess}
                   onGuess={onCardClicked} />
          </div>;
+}
+
+function playerCount(player) {
+  if (player == null) {
+    return 0
+  } else {
+    return 1
+  }
+}
+
+function LobbyScreen(params) {
+  let onJoinButtonPressed = () => {
+    params.root.channel.push("joinlobby", {name : name});
+  }
+  return <div>
+    <div className="row">
+      <div className="column"><h3>Lobby</h3></div>
+    </div>
+    <div className="row">
+      <div className="column"><button onClick={onJoinButtonPressed}>Join</button></div
+      <div className="column"><p>{playerCount(params.root.state.player1)} / 2</p></div>
+    </div>
+  </div>;  
 }
 
 // root - MemoryGame - the root object
