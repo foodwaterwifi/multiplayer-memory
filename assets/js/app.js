@@ -27,7 +27,7 @@ function channel_from_name(gameName, userName) {
 function form_init() {
   $('#game-button').click(() => {
     let gameName = $('#game-input').val();
-    let playerName = $('#player-name').val();
+    let playerName = $('#user-input').val();
     console.log("Joining game '" + gameName + "' as '" + playerName + "'.");
     window.location.href = "/game/" + gameName + "/" + playerName;
   });
