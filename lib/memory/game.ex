@@ -68,7 +68,6 @@ defmodule Memory.Game do
       board
     else
       # generate a list of positions
-      #positions = generatePositionList(width, height)
       positions = List.foldl(Enum.to_list(0..height-1), [], fn yy, positions ->
         List.foldl(Enum.to_list(0..width-1), positions, fn xx, positions ->
           [ [x: xx, y: yy] | positions ]

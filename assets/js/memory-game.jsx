@@ -6,20 +6,24 @@ export default function game_init(root, channel) {
   ReactDOM.render(<MemoryGame channel={channel}/>, root);
 }
 
-// A Position is a {x: integer, y: intereger}
+// A Position is a {x: integer, y: integer}
 // A position represents a cell of the board. {x: 0, y: 0} is the top left cell.
 
-// A Board is a [[string, ...], ...]
+// A Board is a {{string, ...}, ...}
 // A two dimensional array that represents a memory game board.
+
+// A Player is a {name: string, score: integer}
+// One of the two players who is playing the game.
 
 // State:
 //
 // cells - Board - the board our game is played on
 // correctGuesses - [Position, ...] - positions that we have guessed correctly and found matches for
-// firstGuess - Position - our first pick. The user wants to match this with the next card they pick.
-// secondGuess - Position - our second guess. behavior will change depending on whether this was correct or not.
+// firstGuess - Position or null - our first pick. The user wants to match this with the next card they pick.
+// secondGuess - Position or null - our second guess. behavior will change depending on whether this was correct or not.
 // currentTimeoutId - integer - nonzero when there is an action waiting to occur. only one action may occur at a time.
-// gameState - "menu", "play", or "retry" - the screen to display
+// player1 - Player or null - the first player to join. player1 always joins before player2.
+// player2 - Player or null - the second player to join.
 
 class MemoryGame extends React.Component {
   constructor(props) {
@@ -66,6 +70,7 @@ class MemoryGame extends React.Component {
     return this.state.cells != null && !_.includes(_.flatten(this.state.cells), "?");
   }
 
+  // Generates the win text to display on the restart screen. Assumes both players exist.
   winText() {
     if (this.state.player1.score > this.state.player2.score) {
       return this.state.player1.name + " has defeated " + this.state.player2.name + ".";
@@ -76,10 +81,12 @@ class MemoryGame extends React.Component {
     }
   }
 
+  // Returns whether the game is in "lobby" mode.
   isInLobby() {
     return (this.state.player1 == null || this.state.player2 == null);
   }
 
+  // Returns whether we are waiting for a player in lobby mode.
   isWaitingForPlayer() {
     return (this.isInLobby() && this.state.player1 != null && this.state.player1.name == window.userName);
   }
@@ -91,89 +98,80 @@ class MemoryGame extends React.Component {
     }
   }
 
-  resetBoard(randomizeBoard) {
-    this.clearCurrentTimeout();
-    this.setState(_.assign(this.state,
-      {cells: randomizeBoard ? this.generateRandomBoard(4, 4, ["A", "B", "C", "D", "E", "F", "G", "H"]) : this.state.cells.slice(),
-      //{cells: randomizeBoard ? this.generateRandomBoard(2, 2, ["A", "B"]) : this.state.cells.slice(),
-       correctGuesses: [],
-       firstGuess: null,
-       secondGuess: null,
-       clicks: 0,
-      }));
-  }
-
   render() {
+    let onRestartButtonPressed = () => {
+      this.channel.push("reset", {});
+    }
+    let onMenuButtonPressed = () => {
+      window.location.href = "/";
+    }
+    let onCardClicked = (pos) => {
+      if (this.state.current_timeout_id >= 0) return; // don't do anything if we're delaying
+      this.channel.push("guess", {posx: pos.x, posy: pos.y});
+    }
+    let onJoinButtonPressed = () => {
+      this.channel.push("joinlobby", {});
+    }
+
+    let playerCount = (this.state.player1) ? ((this.state.player2) ? 2 : 1) : 0;
+
     console.log("New render: ", this.state);
     if (this.isInLobby()) {
-      return <LobbyScreen root={this}/>;
+      return <LobbyScreen onJoinButtonPressed={onJoinButtonPressed} playerCount={playerCount} isWaitingForPlayer={this.isWaitingForPlayer()}/>;
     }
     else if (this.gameHasEnded()) {
-      return <RetryScreen root={this}/>;
+      return <RetryScreen onMenuButtonPressed={onMenuButtonPressed} onRestartButtonPressed={onRestartButtonPressed} winText={this.winText()}/>;
     } else {
-      return <PlayScreen root={this}/>;
+      return <PlayScreen onMenuButtonPressed={onMenuButtonPressed} onCardClicked={onCardClicked} state={this.state}/>;
     }
   }
 }
 
-// root - MemoryGame - the root object
+// state - the game state
+// onMenuButtonPressed - callback for when menu button is pressed
+// onCardClicked - callback for when a card is clicked
 function PlayScreen(params) {
-  let onMenuButtonPressed = () => {
-    window.location.href = "/";
-  }
-  let onCardClicked = (pos) => {
-    if (params.root.state.current_timeout_id >= 0) return; // don't do anything if we're delaying
-    params.root.channel.push("guess", {posx: pos.x, posy: pos.y});
-  }
   return <div>
            <div className="row">
              <div className="column"><h1>Memory Game</h1></div>
            </div>
            <div className="row">
-             <div className="column"><button onClick={onMenuButtonPressed}>Menu</button></div>
-             <div className="column"><p>{params.root.state.player1.name}'s Score: {params.root.state.player1.score}</p></div>
-             <div className="column"><p>{params.root.state.player2.name}'s Score: {params.root.state.player2.score}</p></div>
+             <div className="column"><button onClick={params.onMenuButtonPressed}>Menu</button></div>
+             <div className="column"><p>{params.state.player1.name}'s Score: {params.state.player1.score}</p></div>
+             <div className="column"><p>{params.state.player2.name}'s Score: {params.state.player2.score}</p></div>
            </div>
-           <Board cells={params.root.state.cells}
-                  firstGuess={params.root.state.first_guess}
-                  secondGuess={params.root.state.second_guess}
-                  onGuess={onCardClicked} />
+           <Board cells={params.state.cells}
+                  firstGuess={params.state.first_guess}
+                  secondGuess={params.state.second_guess}
+                  onGuess={params.onCardClicked} />
          </div>;
 }
 
-function playerCount(player) {
-  if (player == null) {
-    return 0
-  } else {
-    return 1
-  }
-}
-
+// onJoinButtonPressed - callback for when the join button is pressed
+// playerCount - the number of players in the lobby
+// isWaitingForPlayer - whether or not the user has joined and is waiting for another player
 function LobbyScreen(params) {
-  let onJoinButtonPressed = () => {
-    params.root.channel.push("joinlobby", {});
-  }
   return <div>
     <div className="row">
       <div className="column"><h3>Lobby</h3></div>
     </div>
     <div className="row">
       <div className="column">
-        <p>{playerCount(params.root.state.player1)} / 2</p>
+        <p>{params.playerCount} / 2</p>
       </div>
     </div>
     <div className="row">
       <div className="column">
-        <LobbyJoinButton onJoinButtonPressed={onJoinButtonPressed} waiting={params.root.isWaitingForPlayer()}/>
+        <LobbyJoinButton onJoinButtonPressed={params.onJoinButtonPressed} isWaitingForPlayer={params.isWaitingForPlayer}/>
       </div>
     </div>
   </div>;
 }
 
-// waiting - whether the user has joined and is waiting for another user to join
+// isWaitingForPlayer - whether the user has joined and is waiting for another user to join
 // onJoinButtonPressed - join callback
 function LobbyJoinButton(params) {
-  if (!params.waiting) {
+  if (!params.isWaitingForPlayer) {
     return <button onClick={params.onJoinButtonPressed}>Join</button>;
   }
   else {
@@ -181,23 +179,19 @@ function LobbyJoinButton(params) {
   }
 }
 
-// root - MemoryGame - the root object
+// winText - the text to display on the screen that describes the outcome of the game
+// onRestartButtonPressed - callback for when the restart button is pressed
+// onMenuButtonPressed - callback for when the menu button is pressed
 function RetryScreen(params) {
-  let onRestartButtonPressed = () => {
-    params.root.channel.push("reset", {});
-  }
-  let onMenuButtonPressed = () => {
-    window.location.href = "/";
-  }
   return <div>
     <div className="row">
-      <div className="column"><h3>{params.root.winText()}</h3></div>
+      <div className="column"><h3>{params.winText}</h3></div>
     </div>
     <div className="row">
-      <div className="column"><button onClick={onRestartButtonPressed}>Restart</button></div>
+      <div className="column"><button onClick={params.onRestartButtonPressed}>Restart</button></div>
     </div>
     <div className="row">
-      <div className="column"><button onClick={onMenuButtonPressed}>Menu</button></div>
+      <div className="column"><button onClick={params.onMenuButtonPressed}>Menu</button></div>
     </div>
   </div>;
 }
